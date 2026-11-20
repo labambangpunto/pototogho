@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pototogho — Hash Comparator for GNOME</title>
+    <meta
+      name="description"
+      content="A lightweight, pure Rust cryptographic hash comparator built with GTK4 and Libadwaita for GNOME."
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="../data/icons/hicolor/scalable/apps/dev.labambangpunto.pototogho.svg"
+    />
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        /* GNOME Adwaita Light Palette (100% Solid / Opaque) */
+        --bg-page: #fafafa;
+        --bg-header: #fafafa;
+        --bg-card: #ffffff;
+        --bg-pill-secondary: #ebebed;
+        --bg-pill-secondary-hover: #dfdfe2;
+        --bg-code: #f0f0f2;
+        --text-primary: #242424;
+        --text-secondary: #5e5c64;
+        --text-muted: #77767b;
+        --border-subtle: #e3e3e3;
+        --border-card: #e5e5e5;
+        --accent-blue: #3584e4;
+        --accent-blue-hover: #1c71d8;
+        --accent-blue-soft: #e6f0fc;
+        --radius-card: 12px;
+        --radius-pill: 9999px;
+      }
+
+      [data-theme="dark"] {
+        /* GNOME Adwaita Dark Palette (100% Solid / Opaque) */
+        --bg-page: #1e1e1e;
+        --bg-header: #1e1e1e;
+        --bg-card: #2a2a2a;
+        --bg-pill-secondary: #333333;
+        --bg-pill-secondary-hover: #3e3e3e;
+        --bg-code: #2c2c2c;
+        --text-primary: #ebebeb;
+        --text-secondary: #9a9996;
+        --text-muted: #77767b;
+        --border-subtle: #333333;
+        --border-card: #363636;
+        --accent-blue: #3584e4;
+        --accent-blue-hover: #62a0ea;
+        --accent-blue-soft: #22364d;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Hide Scrollbars Across All Browsers */
+      html,
+      body,
+      .code-block {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE & Edge */
+      }
+
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar,
+      .code-block::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, GNOME Web (Epiphany) */
+      }
+
+      html {
+        scroll-behavior: smooth;
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        background-color: var(--bg-page);
+        color: var(--text-primary);
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+
+      body {
+        line-height: 1.6;
+        background-color: var(--bg-page);
+        color: var(--text-primary);
+        transition:
+          background-color 0.2s ease,
+          color 0.2s ease;
+        overflow-x: hidden;
+      }
+
+      /* Top Navigation Bar (Solid GNOME Style) */
+      .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background-color: var(--bg-header);
+        border-bottom: 1px solid var(--border-subtle);
+      }
+
+      .nav-container {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 0.75rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        text-decoration: none;
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: 1.05rem;
+        letter-spacing: -0.015em;
+      }
+
+      .nav-brand img {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+      }
+
+      .version-badge {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.15rem 0.55rem;
+        border-radius: var(--radius-pill);
+        background-color: var(--accent-blue-soft);
+        color: var(--accent-blue);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        transition:
+          background-color 0.15s ease,
+          color 0.15s ease;
+      }
+
+      .nav-links a:hover {
+        background-color: var(--bg-pill-secondary);
+        color: var(--text-primary);
+      }
+
+      .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border: none;
+        border-radius: 50%;
+        background-color: var(--bg-pill-secondary);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        margin-left: 0.25rem;
+      }
+
+      .theme-toggle:hover {
+        background-color: var(--bg-pill-secondary-hover);
+      }
+
+      /* Main Container */
+      .container {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      /* Hero Section */
+      .hero {
+        text-align: center;
+        padding: 4.5rem 1rem 2.5rem;
+        max-width: 720px;
+        margin: 0 auto;
+      }
+
+      .hero-icon-wrap {
+        width: 112px;
+        height: 112px;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-icon-wrap img {
+        width: 112px;
+        height: 112px;
+        object-fit: contain;
+      }
+
+      .gnome-circle-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        background-color: var(--bg-pill-secondary);
+        padding: 0.3rem 0.85rem;
+        border-radius: var(--radius-pill);
+        margin-bottom: 1rem;
+      }
+
+      .gnome-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--accent-blue);
+      }
+
+      .hero h1 {
+        font-size: clamp(2.25rem, 5vw, 3.25rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.12;
+        margin-bottom: 1rem;
+      }
+
+      .hero p {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        max-width: 580px;
+        margin: 0 auto 2rem;
+        font-weight: 400;
+      }
+
+      /* GNOME Pill Buttons */
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.85rem;
+      }
+
+      .btn-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.72rem 1.55rem;
+        border-radius: var(--radius-pill);
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition:
+          background-color 0.15s ease,
+          transform 0.1s ease;
+      }
+
+      .btn-pill:active {
+        transform: scale(0.98);
+      }
+
+      .btn-suggested {
+        background-color: var(--accent-blue);
+        color: #ffffff;
+      }
+
+      .btn-suggested:hover {
+        background-color: var(--accent-blue-hover);
+      }
+
+      .btn-secondary {
+        background-color: var(--bg-pill-secondary);
+        color: var(--text-primary);
+      }
+
+      .btn-secondary:hover {
+        background-color: var(--bg-pill-secondary-hover);
+      }
+
+      /* Static App Screenshot Showcase */
+      .showcase-section {
+        padding: 1rem 0 4.5rem;
+      }
+
+      .preview-frame {
+        max-width: 640px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+      }
+
+      .preview-frame img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 14px;
+      }
+
+      /* Section Headings */
+      .section {
+        padding: 4rem 0;
+        border-top: 1px solid var(--border-subtle);
+      }
+
+      .section-header {
+        text-align: center;
+        max-width: 600px;
+        margin: 0 auto 3rem;
+      }
+
+      .section-header h2 {
+        font-size: 1.85rem;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        margin-bottom: 0.5rem;
+      }
+
+      .section-header p {
+        color: var(--text-secondary);
+        font-size: 1rem;
+      }
+
+      /* GNOME Feature Grid */
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 1.25rem;
+      }
+
+      .feature-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-card);
+        padding: 1.5rem;
+      }
+
+      .feature-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background-color: var(--accent-blue-soft);
+        color: var(--accent-blue);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+      }
+
+      .feature-card h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+        letter-spacing: -0.01em;
+      }
+
+      .feature-card p {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        line-height: 1.55;
+      }
+
+      /* Build & Install Boxed List */
+      .install-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .install-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-card);
+        padding: 1.5rem;
+      }
+
+      .install-card h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: 0.35rem;
+      }
+
+      .install-card p {
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+      }
+
+      .code-block {
+        background-color: var(--bg-code);
+        border: 1px solid var(--border-subtle);
+        border-radius: 9px;
+        padding: 0.85rem 1rem;
+        font-family: ui-monospace, "JetBrains Mono", monospace;
+        font-size: 0.8rem;
+        color: var(--text-primary);
+        overflow-x: auto;
+        line-height: 1.5;
+      }
+
+      /* GNOME Style Footer */
+      footer {
+        border-top: 1px solid var(--border-subtle);
+        padding: 3rem 0;
+        margin-top: 2rem;
+        color: var(--text-secondary);
+        font-size: 0.88rem;
+      }
+
+      .footer-inner {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 2rem;
+      }
+
+      .footer-brand {
+        max-width: 420px;
+      }
+
+      .footer-brand strong {
+        color: var(--text-primary);
+        font-size: 0.98rem;
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+      }
+
+      .footer-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .footer-links a:hover {
+        color: var(--accent-blue);
+        text-decoration: underline;
+      }
+
+      .license-note {
+        margin-top: 1.75rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--border-subtle);
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .license-note a {
+        color: var(--text-secondary);
+        text-decoration: underline;
+      }
+
+      @media (max-width: 640px) {
+        .nav-links a.hide-mobile {
+          display: none;
+        }
+        .hero {
+          padding-top: 3rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Top Navigation -->
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="#" class="nav-brand">
+          <img
+            src="assets/icons/icon.svg"
+            alt="Pototogho Icon"
+            onerror="this.style.display = 'none'"
+          />
+          <span>Pototogho</span>
+          <span class="version-badge">0.1.0</span>
+        </a>
+        <nav class="nav-links">
+          <a href="#preview" class="hide-mobile">Preview</a>
+          <a href="#features" class="hide-mobile">Features</a>
+          <a href="#install">Build &amp; Install</a>
+          <a
+            href="https://github.com/labambangpunto/pototogho"
+            target="_self"
+            rel="noopener"
+            >GitHub</a
+          >
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            title="Toggle Dark/Light Theme"
+            aria-label="Toggle Dark/Light Theme"
+          >
+            <svg
+              id="themeIcon"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+            >
+              <path
+                d="M8 1a7 7 0 1 0 5.95 10.68A5.5 5.5 0 0 1 5.32 3.05 6.97 6.97 0 0 0 8 1z"
+              />
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- Hero Section -->
+      <section class="hero">
+        <div class="hero-icon-wrap">
+          <img
+            src="../data/icons/hicolor/scalable/apps/dev.labambangpunto.pototogho.svg"
+            alt="Pototogho Application Icon"
+          />
+        </div>
+
+        <div class="gnome-circle-pill">
+          <span class="gnome-dot"></span>
+          <span>Built with Pure Rust &amp; Libadwaita</span>
+        </div>
+
+        <h1>Verify hashes with native GNOME simplicity.</h1>
+        <p>
+          Pototogho is a fast, distraction-free cryptographic hash comparator
+          crafted with GTK4 and Libadwaita—written 100% in Rust with zero XML UI
+          overhead.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#install" class="btn-pill btn-suggested">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path
+                d="M8 1v9.59l3.3-3.3 1.4 1.42L8 13.41l-4.7-4.7 1.4-1.42L8 10.59V1h0zM2 14h12v1.5H2V14z"
+              />
+            </svg>
+            Get Pototogho
+          </a>
+          <a
+            href="https://github.com/labambangpunto/pototogho"
+            target="_self"
+            rel="noopener"
+            class="btn-pill btn-secondary"
+          >
+            View Source
+          </a>
+        </div>
+      </section>
+
+      <!-- App Screenshot Preview -->
+      <section class="showcase-section" id="preview">
+        <div class="preview-frame">
+          <img
+            src="assets/app-preview/main-page.png"
+            alt="Pototogho Main Window Preview"
+          />
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section class="section" id="features">
+        <div class="section-header">
+          <h2>Designed for the GNOME Desktop</h2>
+          <p>
+            Focused on speed, native integration, and clean architecture from
+            backend to UI.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                <path
+                  d="M5.85 3.15a.5.5 0 0 1 0 .7L2.71 7l3.14 3.15a.5.5 0 0 1-.7.7l-3.5-3.5a.5.5 0 0 1 0-.7l3.5-3.5a.5.5 0 0 1 .7 0zm4.3 0a.5.5 0 0 1 .7 0l3.5 3.5a.5.5 0 0 1 0 .7l-3.5 3.5a.5.5 0 0 1-.7-.7L13.29 7l-3.14-3.15a.5.5 0 0 1 0-.7z"
+                />
+              </svg>
+            </div>
+            <h3>100% Pure Rust</h3>
+            <p>
+              Both application logic and widget hierarchy are constructed
+              directly in Rust using <code>gtk4</code> and
+              <code>libadwaita</code> without <code>.ui</code> XML files.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                <path
+                  d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm3.35 5.35-4 4a.5.5 0 0 1-.7 0l-2-2a.5.5 0 1 1 .7-.7L7 9.29l3.65-3.64a.5.5 0 0 1 .7.7z"
+                />
+              </svg>
+            </div>
+            <h3>Smart Normalization</h3>
+            <p>
+              Automatically trims trailing spaces or newlines from clipboard
+              pastes and performs case-insensitive comparisons across MD5,
+              SHA-1, SHA-256, and SHA-512.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                <path
+                  d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3zm2 2v6h8V5H4z"
+                />
+              </svg>
+            </div>
+            <h3>Adaptive Libadwaita UI</h3>
+            <p>
+              Follows GNOME Human Interface Guidelines with responsive
+              <code>AdwClamp</code> layouts, system dark mode support, and
+              keyboard shortcuts.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                <path
+                  d="M8 1.5l5.5 3v7L8 14.5l-5.5-3v-7L8 1.5zm0 1.4L3.8 5.2 8 7.5l4.2-2.3L8 2.9z"
+                />
+              </svg>
+            </div>
+            <h3>Flatpak Sandboxed</h3>
+            <p>
+              Targets the GNOME 50 Flatpak runtime for reliable, isolated
+              distribution with zero network permissions and instant startup.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Build & Install Section -->
+      <section class="section" id="install">
+        <div class="section-header">
+          <h2>Build &amp; Install</h2>
+          <p>
+            Run Pototogho via Flatpak or build directly from source using GNOME
+            Builder and Meson.
+          </p>
+        </div>
+
+        <div class="install-grid">
+          <div class="install-card">
+            <h3>Install Flatpak Bundle</h3>
+            <p>
+              Install the exported Flatpak package locally for your user
+              account:
+            </p>
+            <pre class="code-block">
+flatpak install --user dev.labambangpunto.pototogho.flatpak
+flatpak run dev.labambangpunto.pototogho</pre
+            >
+          </div>
+
+          <div class="install-card">
+            <h3>Build from Source</h3>
+            <p>
+              Open the repository in <strong>GNOME Builder 50+</strong> and
+              press <code>Ctrl+F5</code>, or compile with Meson:
+            </p>
+            <pre class="code-block">
+git clone https://github.com/labambangpunto/pototogho.git
+cd pototogho
+meson setup _build --prefix=/usr/local
+ninja -C _build install</pre
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <strong>Pototogho</strong>
+            <span
+              >A native GNOME hash comparator written in pure Rust. Created by
+              Bambang Punto (labambangpunto).</span
+            >
+          </div>
+          <div class="footer-links">
+            <a
+              href="https://github.com/labambangpunto/pototogho"
+              target="_self"
+              rel="noopener"
+              >Source Code</a
+            >
+            <a
+              href="https://github.com/labambangpunto/pototogho/issues"
+              target="_self"
+              rel="noopener"
+              >Report an Issue</a
+            >
+            <a
+              href="https://github.com/labambangpunto/pototogho/releases"
+              target="_self"
+              rel="noopener"
+              >Releases</a
+            >
+          </div>
+        </div>
+        <div class="license-note">
+          Source code is licensed under
+          <a
+            href="https://www.gnu.org/licenses/gpl-3.0.html"
+            target="_self"
+            rel="noopener"
+            >GPL-3.0-or-later</a
+          >. Application icon is licensed under
+          <a
+            href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+            target="_self"
+            rel="noopener"
+            >CC BY-NC-SA 4.0</a
+          >.
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Respect OS dark/light preference initially
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+      if (prefersDark.matches) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+
+      const themeToggle = document.getElementById("themeToggle");
+      themeToggle.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme");
+        if (current === "dark") {
+          document.documentElement.removeAttribute("data-theme");
+        } else {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      });
+    </script>
+  </body>
+</html>
