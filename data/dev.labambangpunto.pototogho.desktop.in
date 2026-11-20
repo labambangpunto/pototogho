@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Pototogho
+Exec=pototogho
+Icon=dev.labambangpunto.pototogho
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true
+DBusActivatable=true

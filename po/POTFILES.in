@@ -1,0 +1,5 @@
+data/dev.labambangpunto.pototogho.desktop.in
+data/dev.labambangpunto.pototogho.metainfo.xml.in
+data/dev.labambangpunto.pototogho.gschema.xml
+src/application.rs
+src/window.rs

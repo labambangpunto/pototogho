@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=dev.labambangpunto.pototogho
+Exec=@bindir@/pototogho --gapplication-service

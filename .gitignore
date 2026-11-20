@@ -1,0 +1,21 @@
+# Hasil kompilasi Rust
+/target/
+**/*.rs.bk
+
+# File konfigurasi yang dihasilkan otomatis oleh Meson dari src/config.rs.in
+/src/config.rs
+
+# Direktori build Meson
+/_build/
+/build/
+/builddir/
+
+# Artefak Flatpak & GNOME Builder
+/.flatpak-builder/
+/.gnome-builder/
+/repo/
+*.flatpak
+
+# File sementara editor & sistem
+*~
+.DS_Store
